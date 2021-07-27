@@ -24,7 +24,7 @@ jobs:
           ORIGIN_TAG="$(git ls-remote --tags origin | grep -oP 'refs/tags/v\d+\.\d+\.\d+' | tail -n1 | awk -F / '{print $NF}')"
           UPSTREAM_TAG="$(git ls-remote --tags upstream | grep -oP 'refs/tags/v\d+\.\d+\.\d+' | tail -n1 | awk -F / '{print $NF}')"
           if [ "${ORIGIN_TAG}" = "${UPSTREAM_TAG}" ]; then exit 0; fi
-          UPSTREAM_COMMIT="$(git ls-remote --tags upstream | grep ${UPSTREAM_TAG} | awk '{print $1}')"
+          UPSTREAM_COMMIT="$(git ls-remote --tags upstream | grep ${UPSTREAM_TAG} | tail -n1 | awk '{print $1}')"
           git checkout ${UPSTREAM_COMMIT}
           git rebase origin/master
           git tag ${UPSTREAM_TAG}
