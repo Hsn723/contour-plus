@@ -536,6 +536,44 @@ func testHTTPProxyReconcile() {
 			return k8sClient.Get(context.Background(), objKey, crt)
 		}, 5*time.Second).Should(Succeed())
 	})
+
+	It(`should not create DNSEndpoint if opted-out via annotation`, func() {
+		ns := testNamespacePrefix + randomString(10)
+		Expect(k8sClient.Create(context.Background(), &corev1.Namespace{
+			ObjectMeta: ctrl.ObjectMeta{Name: ns},
+		})).ShouldNot(HaveOccurred())
+
+		By("setup manager with ClusterIssuer")
+		scm, mgr := setupManager()
+		Expect(SetupReconciler(mgr, scm, ReconcilerOptions{
+			ServiceKey:        testServiceKey,
+			DefaultIssuerName: "test-issuer",
+			DefaultIssuerKind: IssuerKind,
+			CreateCertificate: true,
+		})).ShouldNot(HaveOccurred())
+
+		stopMgr := startTestManager(mgr)
+		defer stopMgr()
+
+		By("creating HTTPProxy with opt-out annotation")
+		hpKey := client.ObjectKey{Name: "foo", Namespace: ns}
+		hp := newDummyHTTPProxy(hpKey)
+		hp.Annotations[testDNSEndpointAnnotation] = "false"
+		Expect(k8sClient.Create(context.Background(), hp)).ShouldNot(HaveOccurred())
+
+		By("getting Certificate")
+		crt := certificate()
+		objKey := client.ObjectKey{Name: hpKey.Name, Namespace: hpKey.Namespace}
+		Eventually(func() error {
+			return k8sClient.Get(context.Background(), objKey, crt)
+		}, 5*time.Second).Should(Succeed())
+
+		By("confirming DNSEndpoint does not exist")
+		time.Sleep(time.Second)
+		endpointList := dnsEndpointList()
+		Expect(k8sClient.List(context.Background(), endpointList, client.InNamespace(ns))).ShouldNot(HaveOccurred())
+		Expect(endpointList.Items).Should(BeEmpty())
+	})
 }
 
 func newDummyHTTPProxy(hpKey client.ObjectKey) *projectcontourv1.HTTPProxy {
