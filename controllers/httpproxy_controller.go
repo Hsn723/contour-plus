@@ -22,6 +22,7 @@ import (
 
 const (
 	excludeAnnotation                 = "contour-plus.cybozu.com/exclude"
+	testDNSEndpointAnnotation         = "contour-plus.cybozu.com/dns-endpoint"
 	testACMETLSAnnotation             = "kubernetes.io/tls-acme"
 	issuerNameAnnotation              = "cert-manager.io/issuer"
 	clusterIssuerNameAnnotation       = "cert-manager.io/cluster-issuer"
@@ -127,6 +128,9 @@ func (r *HTTPProxyReconciler) isClassNameMatched(hp *projectcontourv1.HTTPProxy)
 
 func (r *HTTPProxyReconciler) reconcileDNSEndpoint(ctx context.Context, hp *projectcontourv1.HTTPProxy, log logr.Logger) error {
 	if !r.CreateDNSEndpoint {
+		return nil
+	}
+	if hp.Annotations[testDNSEndpointAnnotation] == "false" {
 		return nil
 	}
 

@@ -27,7 +27,7 @@ ENVTEST_ASSETS_DIR := testbin
 ENVTEST_SCRIPT_URL := https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v$(CONTROLLER_RUNTIME_VERSION)/hack/setup-envtest.sh
 .PHONY: test
 test: setup-envtest crds simple-test
-	source <($(SETUP_ENVTEST) use -p env); \
+	source <($(SETUP_ENVTEST) use -p env 1.21.x); \
 		go test -race -v -count 1 ./...
 
 # Generate manifests e.g. CRD, RBAC etc.
